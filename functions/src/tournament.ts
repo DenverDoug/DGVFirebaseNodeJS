@@ -69,8 +69,8 @@ const setTournamentResults = function (scores) {
             position: result.position,
             participants: positions.length,
             type: "open"
-        });
-    });
+        });        
+    });    
 };
 
 const startNextTournament = function (lastTournamentKey: string) {

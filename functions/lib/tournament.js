@@ -44,7 +44,7 @@ const setTournamentResults = function (scores) {
                 result.position = positions[index - 1].position;
             }
             else {
-                result.position = positions[index - 1].position + 1;
+                result.position = index + 1;
             }
         }
         positions.push(result);
