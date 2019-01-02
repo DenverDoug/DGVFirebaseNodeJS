@@ -2,16 +2,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const admin = require("firebase-admin");
 const utilities_1 = require("./utilities");
+const constants_1 = require("./constants");
 const db = admin.database();
-var TournamentStatus;
-(function (TournamentStatus) {
-    TournamentStatus[TournamentStatus["current"] = 0] = "current";
-    TournamentStatus[TournamentStatus["closed"] = 1] = "closed";
-    TournamentStatus[TournamentStatus["closedNotScored"] = 2] = "closedNotScored";
-})(TournamentStatus || (TournamentStatus = {}));
 const getTournament = function (status) {
     return new Promise((resolve, reject) => {
-        const getTournamentQuery = db.ref().child('tournaments/').orderByChild("status").equalTo(TournamentStatus[status]);
+        const getTournamentQuery = db.ref().child('tournaments/').orderByChild("status").equalTo(constants_1.TournamentStatus[status]);
         utilities_1.getData(getTournamentQuery, function (tournament) {
             resolve(tournament);
         }, function () {
@@ -62,7 +57,7 @@ const setTournamentResults = function (scores) {
 };
 const startNextTournament = function (lastTournamentKey) {
     const fail = function () {
-        console.warn("There are no tournaments in the dust of this planet.");
+        console.warn("There are no tournaments.");
     };
     const success = function (snapshot) {
         const key = utilities_1.getKey(snapshot.val(), true);
@@ -72,7 +67,7 @@ const startNextTournament = function (lastTournamentKey) {
             utilities_1.getData(query, success, fail);
         }
         else {
-            db.ref().child('tournaments/' + key).update({ status: TournamentStatus[TournamentStatus.current], scores: {} });
+            db.ref().child('tournaments/' + key).update({ status: constants_1.TournamentStatus[constants_1.TournamentStatus.current], scores: {} });
         }
     };
     const getFirstTournament = function () {
@@ -92,10 +87,10 @@ const startNextTournament = function (lastTournamentKey) {
 // find next tournament set status to current
 // clear scores on next
 function startTournament(response) {
-    getTournament(TournamentStatus.current).then((tournament) => {
+    getTournament(constants_1.TournamentStatus.current).then((tournament) => {
         if (tournament) {
             const key = utilities_1.getKey(tournament.val(), false);
-            db.ref().child('tournaments/' + key).update({ status: TournamentStatus[TournamentStatus.closedNotScored] });
+            db.ref().child('tournaments/' + key).update({ status: constants_1.TournamentStatus[constants_1.TournamentStatus.closedNotScored] });
             startNextTournament(key);
         }
         else {
@@ -110,7 +105,7 @@ exports.startTournament = startTournament;
 // assign scores + set participants
 // set status to closed
 function resolveTournament(response) {
-    getTournament(TournamentStatus.closedNotScored).then((tournament) => {
+    getTournament(constants_1.TournamentStatus.closedNotScored).then((tournament) => {
         console.log("got tournament");
         if (tournament) {
             const key = utilities_1.getKey(tournament.val(), false);
@@ -122,7 +117,7 @@ function resolveTournament(response) {
                 setTournamentResults(scores);
             }
             // close tournament
-            db.ref().child('tournaments/' + key).update({ status: TournamentStatus[TournamentStatus.closed] });
+            db.ref().child('tournaments/' + key).update({ status: constants_1.TournamentStatus[constants_1.TournamentStatus.closed] });
             response.send("resolve tournament function completed");
         }
     }).catch(error => handleError(error));

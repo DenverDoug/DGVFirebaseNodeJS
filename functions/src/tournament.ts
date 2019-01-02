@@ -3,14 +3,11 @@
 import * as admin from 'firebase-admin';
 import * as functions from 'firebase-functions';
 import { getData, getKey } from './utilities';
+import { TournamentStatus } from './constants';
 
 const db = admin.database();
 
-enum TournamentStatus {
-    current,
-    closed,
-    closedNotScored,
-}
+
 
 const getTournament = function (status: TournamentStatus) {
     return new Promise((resolve, reject) => {
@@ -76,7 +73,7 @@ const setTournamentResults = function (scores) {
 const startNextTournament = function (lastTournamentKey: string) {
 
     const fail = function () {
-        console.warn("There are no tournaments in the dust of this planet.");
+        console.warn("There are no tournaments.");
     }
 
     const success = function (snapshot) {

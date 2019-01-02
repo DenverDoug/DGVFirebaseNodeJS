@@ -4,45 +4,55 @@ import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 admin.initializeApp();
 
-// Fancy tournaments
-import { resolveTournament, startTournament } from './tournament';
-import { onUserAdded } from './multiplayer';
+import { resolveTournament, startTournament } from './tournament'; // fancy tournaments
+import { onPlayerAdded, onGameAdded, onMultiPlayerStatusUpdated, onMultiPlayerGameStatusUpdated, cleanupMultiplayerGames } from './multiplayer';
 
-exports.onUserAdded = functions.database.ref('/multiplayer/PlayerQueue/{pushId}/')
-.onCreate((snapshot, context) => {
-  console.log("running onUserAdded");
-  onUserAdded(snapshot, context);
-});
+// when a player is queued for multiplayer tournament:
+// starts a multiplayer game when there are 4 players in the queue
+exports.onPlayerAdded = functions.database.ref('/multiplayer/PlayerQueue/{pushId}/')
+  .onCreate((snapshot, context) => {
+    console.log("running On Player Added");
+    onPlayerAdded(snapshot, context);
+  });
 
+// when a multiplayer game is created:
+// starts the countdown timer and closes game when the game has expired
+exports.onMultiPlayerGameAdded = functions.database.ref('/multiplayer/games/{pushId}/')
+  .onCreate((snapshot, context) => {
+    console.log("running On Multiplayer Game Added");
+    onGameAdded(snapshot, context);
+  });
+
+// when a player's status is updated in a multiplayer game: 
+// checks if all players has completed their rounds and closes the game
+exports.onMultiPlayerStatusUpdated = functions.database.ref('/multiplayer/games/{pushId}/scoreCards/{playerID}/multiplayerStatus')
+  .onUpdate((snapshot, context) => {
+    console.log("running On Multiplayer Status Updated");
+    onMultiPlayerStatusUpdated(snapshot, context);
+  });
+
+// when a multiplayer game's status is updated:
+// closes the game if the status is completed
+exports.onMultiPlayerGameStatusUpdated = functions.database.ref('/multiplayer/games/{pushId}/status')
+  .onUpdate((snapshot, context) => {
+    console.log("running On Multiplayer Game Status Updated");
+    onMultiPlayerGameStatusUpdated(snapshot, context);
+  });
+
+  // cleanup expired and completed multiplayer games
+  exports.cleanupMultiplayerGames = functions.https.onRequest((req, res) => {
+    console.log("running Cleanup Multiplayer Games");
+    cleanupMultiplayerGames(res);
+  });
+
+// resolves fancy tournament
 exports.resolveTournament = functions.https.onRequest((req, res) => {
-  console.log("running resolve tournament");
+  console.log("running Resolve Tournament");
   resolveTournament(res);
 });
 
+// starts fancy tournament
 exports.startTournament = functions.https.onRequest((req, res) => {
-  console.log("running start tournament tournament");
+  console.log("running Start Tournament");
   startTournament(res);
 });
-
-
-exports.addMessage = functions.https.onRequest((req, res) => {
-  // Grab the text parameter.
-  const original = req.query.text;
-  // Push the new message into the Realtime Database using the Firebase Admin SDK.
-  return admin.database().ref('/messages').push({ original: original }).then((snapshot) => {
-    // Redirect with 303 SEE OTHER to the URL of the pushed object in the Firebase console.
-    return res.redirect(303, snapshot.ref.toString());
-  });
-});
-
-exports.makeUppercase = functions.database.ref('/messages/{pushId}/original')
-  .onCreate((snapshot, context) => {
-    // Grab the current value of what was written to the Realtime Database.
-    const original = snapshot.val();
-    console.log('Uppercasing', context.params.pushId, original);
-    const uppercase = original.toUpperCase();
-    // You must return a Promise when performing asynchronous tasks inside a Functions such as
-    // writing to the Firebase Realtime Database.
-    // Setting an "uppercase" sibling in the Realtime Database returns a Promise.
-    return snapshot.ref.parent.child('uppercase').set(uppercase);
-  });
