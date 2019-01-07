@@ -8,7 +8,7 @@ const playersInGame = 4;
 const cleanupMultiplayerGames = function (response) {
     const fancyTime = new Date();
     const cuts = fancyTime.setHours(fancyTime.getHours() - 24);
-    const query = db.ref().child('/multiplayer/games/').orderByChild('startTime').endAt(cuts);
+    const query = db.ref().child('multiplayerOngoing/games/').orderByChild('startTime').endAt(cuts);
     console.log('fetching old games to remove');
     query.once("value", function (snapshot) {
         if (snapshot.val() !== null) {
@@ -123,7 +123,7 @@ const onMultiPlayerStatusUpdated = function (change, context) {
     // 3. set status to completed
     // 4. calculate position
     // 5. calculate rating
-    const query = db.ref().child('/multiplayer/games/' + gameID);
+    const query = db.ref().child('multiplayerOngoing/games/' + gameID);
     query.transaction(function (game) {
         if (game && game.status && game.status !== constants_1.GameStatus[constants_1.GameStatus.completed]) {
             const scoreCards = [];
@@ -147,10 +147,24 @@ const onGameAdded = function (snapshot, context) {
     console.log('got game - on game added');
     const gameID = context.params.pushId;
     console.log(gameID);
+    console.log(snapshot);
+    const game2 = snapshot.val();
+    const participants = Object.keys(game2['scoreCards']);
+    const fancyTime = game2['startTime'];
+    db.ref().child('multiplayerOngoing/games/' + gameID).set(game2);
+    snapshot.ref.remove();
+    participants.forEach(id => {
+        db.ref().child('playerData/' + id + '/multiplayerGame').set(gameID);
+        db.ref().child('playerData/' + id + '/openGames/' + gameID).set({
+            gameID: gameID,
+            status: constants_1.GameStatus[constants_1.GameStatus.ongoing],
+            startTime: fancyTime,
+        });
+    });
     console.log('starting multiplayer game countdown');
     setTimeout(function () {
         console.log('game expired, set game status to completed for game: ' + gameID);
-        const query = db.ref().child('/multiplayer/games/' + gameID);
+        const query = db.ref().child('/multiplayerOngoing/games/' + gameID);
         query.transaction(function (game) {
             if (game && game.status && game.status !== constants_1.GameStatus[constants_1.GameStatus.completed]) {
                 game.status = constants_1.GameStatus[constants_1.GameStatus.completed];
@@ -162,10 +176,14 @@ const onGameAdded = function (snapshot, context) {
 };
 exports.onGameAdded = onGameAdded;
 const onPlayerAdded = function (snapshot, context) {
-    const ref = db.ref().child('multiplayer/PlayerQueue/');
-    ref.transaction(function (players) {
+    const ref = db.ref().child('multiplayer/');
+    ref.transaction(function (transaction) {
         console.log('inside cannon: playerQueue');
-        if (players) {
+        if (transaction && transaction.PlayerQueue) {
+            console.log('transaction');
+            console.log(transaction);
+            const playerQueueNode = 'PlayerQueue';
+            const players = transaction[playerQueueNode];
             console.log('players');
             console.log(players);
             const keys = Object.keys(players);
@@ -175,32 +193,42 @@ const onPlayerAdded = function (snapshot, context) {
                 const partyPants = {};
                 participants.forEach(pants => {
                     partyPants[pants] = players[pants];
-                    players[pants] = null;
-                });
-                const query = 'multiplayer/games/';
-                const gameKey = db.ref().child(query).push().key;
-                const fancyTime = new Date().getTime();
-                console.log('remove participants from playerqueue');
-                participants.forEach(id => {
-                    db.ref().child('playerData/' + id + '/multiplayerGame').set(gameKey);
-                    db.ref().child('playerData/' + id + '/openGames/' + gameKey).set({
-                        gameID: gameKey,
-                        status: constants_1.GameStatus[constants_1.GameStatus.ongoing],
-                        startTime: fancyTime,
-                    });
+                    transaction.PlayerQueue[pants] = null;
                 });
                 const tournamentKey = utilities_1.getRandomKey(constants_1.TournamentKeys);
                 console.log('got random tournament key');
-                db.ref().child(query + gameKey).set({
+                const fancyTime = new Date().getTime();
+                transaction.freshGames = transaction.freshGames || {};
+                transaction.freshGames[fancyTime] = {
                     scoreCards: partyPants,
                     startTime: fancyTime,
                     tournament: tournamentKey,
                     status: constants_1.GameStatus[constants_1.GameStatus.ongoing],
-                });
+                };
+                transaction.playersInQueue = keys.length - participants.length;
+            }
+            else {
+                transaction.playersInQueue = keys.length;
             }
         }
-        return players;
+        return transaction;
     });
 };
 exports.onPlayerAdded = onPlayerAdded;
+const onPlayerRemoved = function (snapshot, context) {
+    console.log('removed user function started');
+    console.log(snapshot.val());
+    const ref = db.ref().child('multiplayer/');
+    ref.transaction(function (transaction) {
+        if (transaction && transaction.PlayerQueue) {
+            const players = Object.keys(transaction.PlayerQueue).length;
+            transaction.playersInQueue = players;
+        }
+        else if (transaction && !transaction.PlayerQueue) {
+            transaction.playersInQueue = 0;
+        }
+        return transaction;
+    });
+};
+exports.onPlayerRemoved = onPlayerRemoved;
 //# sourceMappingURL=multiplayer.js.map
