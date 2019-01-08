@@ -64,19 +64,32 @@ const closeBrokenGames = function (response: functions.Response) {
 };
 
 const getPlayerRatings = function (scoreCards: Array<any>, everyoneTimedOut: boolean) {
-    const positionModifyers = [0.75, 0.5, 0, -0.25];
+    
+    // const positionModifyers4 = [0.75, 0.5, 0, -0.25];
+    // const positionModifyers3 = [0, 0.33, 0.66];
+    // const positionModifyers2 = [0.25, 0.75];
+
+    const positionModifyers = {
+        4 : [0.75, 0.5, 0, -0.25] ,
+        3 : [0, 0.33, 0.66],
+        2 : [0.25, 0.75]
+    };
+
     const ratingsBase = 20;
 
     const ratings = scoreCards.map(item => { return item.rating });
     const ratingsSum = ratings.reduce((a, b) => a + b, 0);
+           
+    const playerCount = scoreCards.length;
 
     const scoreCardRatings = scoreCards.map(player => {
         if (everyoneTimedOut) {
             player.ratingChange = 0;
         }
         else {
+
             const power = player.rating / ratingsSum;
-            const positionModifyer = positionModifyers[player.position - 1];
+            const positionModifyer = positionModifyers[playerCount][player.position - 1];
             const diff = positionModifyer - power;
             player.ratingChange = ratingsBase * diff;
         }
@@ -112,7 +125,7 @@ const closeCompletedGame = function (results: any, gameID: string) {
 
         // reset positions for players that did not complete their round during the game
         const resetPositions = positions.map(scoreCard => {
-            scoreCard.position = scoreCard.score === UncompletedGameScore ? playersInGame : scoreCard.position;
+            scoreCard.position = scoreCard.score === UncompletedGameScore ? scoreCards.length : scoreCard.position;
             return scoreCard;
         });
 
@@ -281,10 +294,19 @@ const onPlayerAdded = function (snapshot, context) {
                     tournament: tournamentKey,
                     status: GameStatus[GameStatus.ongoing],
                 }
+                transaction.currentGame = transaction.currentGame || {};
+                transaction.currentGame.players =  keys.length;
+                transaction.currentGame.gameID =  fancyTime;
+                
                 transaction.playersInQueue = keys.length - participants.length;
-
             }
             else {
+                if(transaction.currentGame && transaction.currentGame.players < 4){
+
+                    
+                    transaction.currentGame.playersToAdd[snapshot.val().playerID] = snapshot.val();
+
+                }
                 transaction.playersInQueue = keys.length;
             }
         }
