@@ -45,6 +45,11 @@ exports.cleanupMultiplayerGames = functions.https.onRequest((req, res) => {
     console.log("running Cleanup Multiplayer Games");
     multiplayer_1.cleanupMultiplayerGames(res);
 });
+// fix expired but not resolved multiplayer games
+exports.closeBrokenGames = functions.https.onRequest((req, res) => {
+    console.log("running fix multiplayer games");
+    multiplayer_1.closeBrokenGames(res);
+});
 // resolves fancy tournament
 exports.resolveTournament = functions.https.onRequest((req, res) => {
     console.log("running Resolve Tournament");

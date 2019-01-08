@@ -31,6 +31,42 @@ const cleanupMultiplayerGames = function (response: functions.Response) {
     return response.send('completed multiplayer games cleanup');
 };
 
+const closeBrokenGames = function (response: functions.Response) {
+    console.log('started closeBrokenGames');
+
+    const fancyTime = new Date();
+    const cuts = fancyTime.setHours(fancyTime.getHours() - 1);
+    const query = db.ref().child('multiplayerOngoing/games/').orderByChild('startTime').endAt(cuts);
+
+    console.log('fetching games that are older than one hour');
+    const a = query.once("value", function (snapshot: any) {
+        if (snapshot.val() !== null) {
+            console.log('got old games');
+            //console.log(snapshot.val());
+
+            snapshot.forEach(game => {
+                console.log(game.val());
+                if(game.val().status =='ongoing')
+                {
+                    console.log('game to resolve');
+                    
+                }                
+            });
+        }
+        else {
+            console.error('failed to get old games');
+        }
+    }).then(() =>
+    {
+        console.log('closed broken games');
+        response.send('completed multiplayer games cleanup');
+    }
+    );
+    return a;
+
+   // return response.send('completed multiplayer games cleanup');
+};
+
 const getPlayerRatings = function (scoreCards: Array<any>, everyoneTimedOut: boolean) {
     const positionModifyers = [0.75, 0.5, 0, -0.25];
     const ratingsBase = 20;
@@ -293,5 +329,6 @@ export {
     onGameAdded,
     onMultiPlayerStatusUpdated,
     onMultiPlayerGameStatusUpdated,
-    cleanupMultiplayerGames
+    cleanupMultiplayerGames,
+    closeBrokenGames
 };

@@ -25,6 +25,32 @@ const cleanupMultiplayerGames = function (response) {
     return response.send('completed multiplayer games cleanup');
 };
 exports.cleanupMultiplayerGames = cleanupMultiplayerGames;
+const closeBrokenGames = function (response) {
+    console.log('started closeBrokenGames');
+    const fancyTime = new Date();
+    const cuts = fancyTime.setHours(fancyTime.getHours() - 24);
+    const query = db.ref().child('multiplayerOngoing/games/').orderByChild('startTime').endAt(cuts);
+    console.log('fetching games that are older than one hour');
+    const a = query.once("value", function (snapshot) {
+        if (snapshot.val() !== null) {
+            console.log('got old games');
+            //console.log(snapshot.val());
+            snapshot.forEach(game => {
+                console.log(game.val());
+                if (game.val().status == 'ongoing') {
+                    console.log('game to resolve');
+                    console.log(game);
+                }
+            });
+        }
+        else {
+            console.error('failed to get old games');
+        }
+    });
+    return a;
+    // return response.send('completed multiplayer games cleanup');
+};
+exports.closeBrokenGames = closeBrokenGames;
 const getPlayerRatings = function (scoreCards, everyoneTimedOut) {
     const positionModifyers = [0.75, 0.5, 0, -0.25];
     const ratingsBase = 20;
@@ -223,9 +249,6 @@ const onPlayerRemoved = function (snapshot, context) {
         if (transaction && transaction.PlayerQueue) {
             const players = Object.keys(transaction.PlayerQueue).length;
             transaction.playersInQueue = players;
-        }
-        else if (transaction && !transaction.PlayerQueue) {
-            transaction.playersInQueue = 0;
         }
         return transaction;
     });

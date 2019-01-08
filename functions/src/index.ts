@@ -5,7 +5,7 @@ import * as admin from 'firebase-admin';
 admin.initializeApp();
 
 import { resolveTournament, startTournament } from './tournament'; // fancy tournaments
-import { onPlayerAdded, onPlayerRemoved, onGameAdded, onMultiPlayerStatusUpdated, onMultiPlayerGameStatusUpdated, cleanupMultiplayerGames } from './multiplayer';
+import { onPlayerAdded, onPlayerRemoved, onGameAdded, onMultiPlayerStatusUpdated, onMultiPlayerGameStatusUpdated, cleanupMultiplayerGames, closeBrokenGames } from './multiplayer';
 
 // when a player is queued for multiplayer tournament:
 // starts a multiplayer game when there are 4 players in the queue
@@ -51,6 +51,12 @@ exports.onMultiPlayerGameStatusUpdated = functions.database.ref('/multiplayerOng
   exports.cleanupMultiplayerGames = functions.https.onRequest((req, res) => {
     console.log("running Cleanup Multiplayer Games");
     cleanupMultiplayerGames(res);
+  });
+
+  // fix expired but not resolved multiplayer games
+  exports.closeBrokenGames = functions.https.onRequest((req, res) => {
+    console.log("running fix multiplayer games");
+    closeBrokenGames(res);
   });
 
 // resolves fancy tournament
