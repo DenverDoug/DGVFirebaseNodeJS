@@ -38,7 +38,10 @@ exports.onMultiPlayerStatusUpdated = functions.database.ref('/multiplayerOngoing
 exports.onMultiPlayerGameStatusUpdated = functions.database.ref('/multiplayerOngoing/games/{pushId}/status')
     .onUpdate((snapshot, context) => {
     console.log("running On Multiplayer Game Status Updated");
-    multiplayer_1.onMultiPlayerGameStatusUpdated(snapshot, context);
+    multiplayer_1.onMultiPlayerGameStatusUpdated(snapshot, context).catch(err => {
+        console.error("wow");
+    });
+    ;
 });
 // cleanup expired and completed multiplayer games
 exports.cleanupMultiplayerGames = functions.https.onRequest((req, res) => {

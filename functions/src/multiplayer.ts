@@ -48,7 +48,7 @@ const closeBrokenGames = function (response: functions.Response) {
                 if (game.val().status === GameStatus[GameStatus.ongoing]) {
                     console.log('game to resolve');
                     console.log(game.val().gameID);
-                    game.child("status").set = GameStatus[GameStatus.completed];
+                    game.child("status").getRef().set = GameStatus[GameStatus.completed];
                 }
             });
         }
@@ -58,7 +58,7 @@ const closeBrokenGames = function (response: functions.Response) {
     }).then(() => {
         console.log('closed broken games');
         response.send('completed multiplayer games cleanup');
-    });
+    }).catch(error => console.error(error));;
 
     // return response.send('completed multiplayer games cleanup');
 };
@@ -203,6 +203,7 @@ const onMultiPlayerStatusUpdated = function (change, context) {
 };
 
 const onGameAdded = function (snapshot, context) {
+    
     console.log('got game - on game added');
     const gameID = context.params.pushId;
     console.log(gameID);

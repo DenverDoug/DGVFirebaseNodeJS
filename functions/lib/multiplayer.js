@@ -28,26 +28,29 @@ exports.cleanupMultiplayerGames = cleanupMultiplayerGames;
 const closeBrokenGames = function (response) {
     console.log('started closeBrokenGames');
     const fancyTime = new Date();
-    const cuts = fancyTime.setHours(fancyTime.getHours() - 24);
+    const cuts = fancyTime.setHours(fancyTime.getHours() - 1);
     const query = db.ref().child('multiplayerOngoing/games/').orderByChild('startTime').endAt(cuts);
     console.log('fetching games that are older than one hour');
-    const a = query.once("value", function (snapshot) {
+    return query.once("value", function (snapshot) {
         if (snapshot.val() !== null) {
             console.log('got old games');
-            //console.log(snapshot.val());
             snapshot.forEach(game => {
                 console.log(game.val());
-                if (game.val().status == 'ongoing') {
+                if (game.val().status === constants_1.GameStatus[constants_1.GameStatus.ongoing]) {
                     console.log('game to resolve');
-                    console.log(game);
+                    console.log(game.val().gameID);
+                    game.child("status").getRef().set = constants_1.GameStatus[constants_1.GameStatus.completed];
                 }
             });
         }
         else {
             console.error('failed to get old games');
         }
-    });
-    return a;
+    }).then(() => {
+        console.log('closed broken games');
+        response.send('completed multiplayer games cleanup');
+    }).catch(error => console.error(error));
+    ;
     // return response.send('completed multiplayer games cleanup');
 };
 exports.closeBrokenGames = closeBrokenGames;
@@ -70,76 +73,69 @@ const getPlayerRatings = function (scoreCards, everyoneTimedOut) {
     });
     return scoreCardRatings;
 };
-// const getRandomTournament = function () {
-//     return new Promise((resolve, reject) => {
-//         // console.log('get random tournament');
-//         // const query = db.ref().child('tournaments/');
-//         // getData(query, function (tournaments: any) {
-//         //     console.log('tournament keys loaded');
-//         //     const keys = Object.keys(tournaments.val());
-//         //     const randomKey = getRandomKey(keys);
-//         //     console.log('got random tournament key');
-//         //     console.log(randomKey);
-//         //     resolve(randomKey);
-//         // }, function () {
-//         //     console.error('got no tournaments');
-//         //     reject();
-//         // });
-//     });
-// };
 const closeCompletedGame = function (results, gameID) {
-    console.log('close completed game, calculate positions and ratings and good bois');
-    const players = results.val();
-    const scoreCards = [];
-    Object.keys(players).forEach(function (participant) {
-        scoreCards.push(players[participant]);
-    });
-    // reset the scores for players that did not complete their round during the game
-    const resetScores = scoreCards.map(scoreCard => {
-        const scoresUncompleted = !scoreCard.scores || scoreCard.scores.some(score => score === 0);
-        if (scoresUncompleted || scoreCard.multiplayerStatus !== constants_1.MultiplayerStatus[constants_1.MultiplayerStatus.roundComplete]) {
-            scoreCard.score = constants_1.UncompletedGameScore;
-        }
-        return scoreCard;
-    });
-    const positions = utilities_1.getPlayerPositions(resetScores);
-    // reset positions for players that did not complete their round during the game
-    const resetPositions = positions.map(scoreCard => {
-        scoreCard.position = scoreCard.score === constants_1.UncompletedGameScore ? playersInGame : scoreCard.position;
-        return scoreCard;
-    });
-    const everyoneTimedOut = resetPositions.every(scoreCard => {
-        return scoreCard.score === constants_1.UncompletedGameScore;
-    });
-    const ratings = getPlayerRatings(resetPositions, everyoneTimedOut);
-    ratings.forEach(function (scoreCard) {
-        // do not update game stats for players that retired
-        if (scoreCard.multiplayerStatus !== constants_1.MultiplayerStatus[constants_1.MultiplayerStatus.retired]) {
-            db.ref().child('playerData/' + scoreCard.playerID + '/openGames/' + gameID).update({
-                status: constants_1.GameStatus[constants_1.GameStatus.completed],
-                position: scoreCard.position,
-                ratingChange: scoreCard.ratingChange,
-                completedGame: scoreCard.score < constants_1.UncompletedGameScore
-            });
-        }
-    });
+    return new Promise((resolve, reject) => {
+        console.log('close completed game, calculate positions and ratings and good bois');
+        const players = results.val();
+        const scoreCards = [];
+        Object.keys(players).forEach(function (participant) {
+            scoreCards.push(players[participant]);
+        });
+        // reset the scores for players that did not complete their round during the game
+        const resetScores = scoreCards.map(scoreCard => {
+            const scoresUncompleted = !scoreCard.scores || scoreCard.scores.some(score => score === 0);
+            if (scoresUncompleted || scoreCard.multiplayerStatus !== constants_1.MultiplayerStatus[constants_1.MultiplayerStatus.roundComplete]) {
+                scoreCard.score = constants_1.UncompletedGameScore;
+            }
+            return scoreCard;
+        });
+        const positions = utilities_1.getPlayerPositions(resetScores);
+        // reset positions for players that did not complete their round during the game
+        const resetPositions = positions.map(scoreCard => {
+            scoreCard.position = scoreCard.score === constants_1.UncompletedGameScore ? playersInGame : scoreCard.position;
+            return scoreCard;
+        });
+        const everyoneTimedOut = resetPositions.every(scoreCard => {
+            return scoreCard.score === constants_1.UncompletedGameScore;
+        });
+        const ratings = getPlayerRatings(resetPositions, everyoneTimedOut);
+        ratings.forEach(function (scoreCard) {
+            // do not update game stats for players that retired
+            if (scoreCard.multiplayerStatus !== constants_1.MultiplayerStatus[constants_1.MultiplayerStatus.retired]) {
+                db.ref().child('playerData/' + scoreCard.playerID + '/openGames/' + gameID).update({
+                    status: constants_1.GameStatus[constants_1.GameStatus.completed],
+                    position: scoreCard.position,
+                    ratingChange: scoreCard.ratingChange,
+                    completedGame: scoreCard.score < constants_1.UncompletedGameScore
+                });
+            }
+        });
+        resolve(); // all done
+    }); // promise ends
 };
 const onMultiPlayerGameStatusUpdated = function (change, context) {
     const gameID = context.params.pushId;
     console.log('game status updated:');
     console.log(change.after.val());
-    if (change.after.val() === constants_1.GameStatus[constants_1.GameStatus.completed]) {
-        const query = change.after.ref.parent.child('scoreCards');
-        query.once("value", function (snapshot) {
-            if (snapshot.val() !== null) {
-                closeCompletedGame(snapshot, gameID);
-            }
-            else {
-                console.error('failed to get scoreCards for game:' + gameID);
-            }
-        });
-    }
-    return change;
+    return new Promise((resolve, reject) => {
+        if (change.after.val() === constants_1.GameStatus[constants_1.GameStatus.completed]) {
+            const query = change.after.ref.parent.child('scoreCards');
+            query.once("value", function (snapshot) {
+                if (snapshot.val() !== null) {
+                    closeCompletedGame(snapshot, gameID).then(() => {
+                        resolve();
+                    }).catch(error => console.error(error));
+                }
+                else {
+                    const message = 'failed to get scoreCards for game:' + gameID;
+                    reject(message);
+                }
+            });
+        }
+        else {
+            resolve();
+        }
+    });
 };
 exports.onMultiPlayerGameStatusUpdated = onMultiPlayerGameStatusUpdated;
 const onMultiPlayerStatusUpdated = function (change, context) {
