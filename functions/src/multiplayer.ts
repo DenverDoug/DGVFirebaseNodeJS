@@ -91,28 +91,6 @@ const getPlayerRatings = function (scoreCards: Array<any>, everyoneTimedOut: boo
     return scoreCardRatings;
 }
 
-// const getRandomTournament = function () {
-//     return new Promise((resolve, reject) => {
-
-//         // console.log('get random tournament');
-//         // const query = db.ref().child('tournaments/');
-
-//         // getData(query, function (tournaments: any) {
-//         //     console.log('tournament keys loaded');
-//         //     const keys = Object.keys(tournaments.val());
-//         //     const randomKey = getRandomKey(keys);
-
-//         //     console.log('got random tournament key');
-//         //     console.log(randomKey);
-//         //     resolve(randomKey);
-
-//         // }, function () {
-//         //     console.error('got no tournaments');
-//         //     reject();
-//         // });
-//     });
-// };
-
 const closeCompletedGame = function (results: any, gameID: string) {
 
     console.log('close completed game, calculate positions and ratings and good bois');
