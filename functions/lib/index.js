@@ -24,7 +24,17 @@ exports.onPlayerRemoved = functions.database.ref('/multiplayer/PlayerQueue/{push
 exports.onMultiPlayerGameAdded = functions.database.ref('/multiplayer/freshGames/{pushId}/')
     .onCreate((snapshot, context) => {
     console.log("running On Multiplayer Game Added");
-    multiplayer_1.onGameAdded(snapshot, context);
+    multiplayer_1.onGameAdded(snapshot, context).catch(err => {
+        console.error("wow");
+    });
+});
+// when a player has queued up and should be moved to an ongoing game
+exports.onPlayerAddedExistingGame = functions.database.ref('/multiplayer/currentGame/playersToAdd/{pushId}/')
+    .onCreate((snapshot, context) => {
+    console.log("running On Player Added Existing Game");
+    multiplayer_1.onPlayerAddedExistingGame(snapshot, context).catch(err => {
+        console.error("wow");
+    });
 });
 // when a player's status is updated in a multiplayer game: 
 // checks if all players has completed their rounds and closes the game
@@ -41,7 +51,6 @@ exports.onMultiPlayerGameStatusUpdated = functions.database.ref('/multiplayerOng
     multiplayer_1.onMultiPlayerGameStatusUpdated(snapshot, context).catch(err => {
         console.error("wow");
     });
-    ;
 });
 // cleanup expired and completed multiplayer games
 exports.cleanupMultiplayerGames = functions.https.onRequest((req, res) => {
