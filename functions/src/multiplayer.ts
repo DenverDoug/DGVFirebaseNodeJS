@@ -279,19 +279,20 @@ const onPlayerAddedExistingGame = function (snapshot, context) {
 };
 
 
-const onPlayerAdded = function (snapshot, context) {
+const onPlayerAdded = function (snapshot, context) {  
+
     const ref = db.ref().child('multiplayer/');
     ref.transaction(function (transaction: any) {
-        console.log('inside cannon: playerQueue');
+        console.log('onPlayerAdded starts');
 
         if (transaction && transaction.PlayerQueue) {
-            console.log('transaction');
-            console.log(transaction);
+           // console.log('transaction');
+            //console.log(transaction);
 
             const playerQueueNode = 'PlayerQueue';
             const players = transaction[playerQueueNode];
-            console.log('players');
-            console.log(players);
+            //console.log('players');
+            //console.log(players);
 
             const keys = Object.keys(players);
             console.log('user count in player queue: ' + keys.length);
@@ -326,23 +327,27 @@ const onPlayerAdded = function (snapshot, context) {
                 transaction.playersInQueue = keys.length - participants.length;
             }
             else {
-                console.log(transaction.currentGame.playerCount);
-                const ID = getKey(snapshot.val(), true);
-                console.log(ID);
+                //console.log(transaction.currentGame.playerCount);
+                // const ID = getKey(snapshot.val(), true);
+                console.log(snapshot.key);
+                console.log('previous game key: ');
+                console.log( transaction.PlayerQueue[snapshot.key].multiplayerStatus);
+                console.log('ongoing game key: ');
+                console.log( transaction.currentGame.gameID);
 
-                //check if we have an ongoing game with free space
-                if (transaction.currentGame && transaction.currentGame.playerCount < 4) {
+                //check if we have an ongoing game with free space. Also check if it's the same game the player just completed
+                if (transaction.currentGame && transaction.currentGame.playerCount < 4 && transaction.currentGame.gameID != transaction.PlayerQueue[snapshot.key].multiplayerStatus) {
                     // sexy dates
                     console.log("current game exists");
 
                     const now = new Date().getTime();
                     const cutOff = transaction.currentGame.gameID + (60000 * 5);
-                    console.log(now);
-                    console.log(cutOff);
+                    //console.log(now);
+                    //console.log(cutOff);
                     if (now < cutOff) {
                         console.log("current game exists and within five minutes");
-                        console.log(snapshot.val());
-                        console.log(snapshot.key);
+                      //  console.log(snapshot.val());
+                       // console.log(snapshot.key);
 
                         transaction.currentGame.playersToAdd = transaction.currentGame.playersToAdd || {};
                         transaction.currentGame.playersToAdd[snapshot.key] = snapshot.val();
