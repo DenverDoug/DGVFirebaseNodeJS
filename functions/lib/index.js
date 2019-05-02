@@ -55,7 +55,7 @@ exports.onMultiPlayerGameStatusUpdated = functions.database.ref('/multiplayerOng
 // cleanup expired and completed multiplayer games
 exports.cleanupMultiplayerGames = functions.https.onRequest((req, res) => {
     console.log("running Cleanup Multiplayer Games");
-    multiplayer_1.cleanupMultiplayerGames(res);
+    return multiplayer_1.cleanupMultiplayerGames(res);
 });
 // fix expired but not resolved multiplayer games
 exports.closeBrokenGames = functions.https.onRequest((req, res) => {

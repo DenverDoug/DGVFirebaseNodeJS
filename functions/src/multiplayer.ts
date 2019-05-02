@@ -15,25 +15,45 @@ const playersInGame = 2;
 
 const cleanupMultiplayerGames = function (response: functions.Response) {
     const fancyTime = new Date();
-    const cuts = fancyTime.setHours(fancyTime.getHours() - 24);
-    const query = db.ref().child('multiplayerOngoing/games/').orderByChild('startTime').endAt(cuts);
+    const closeGameTime = fancyTime.setMinutes(fancyTime.getMinutes() - 15);
+    const deleteGameTime = fancyTime.setHours(fancyTime.getHours() - 48);
+    const query = db.ref().child('multiplayerOngoing/games/');
 
-    console.log('fetching old games to remove');
-    query.once("value", function (snapshot: any) {
+    console.log('fetching old games to remove nein');
+
+    console.log(closeGameTime);
+    console.log(deleteGameTime);
+
+    return query.once("value", function (snapshot: any) {
         if (snapshot.val() !== null) {
-            console.log('got old games to remove');
-            console.log(snapshot.val());
+            console.log('got games');
+            const updates = {};
 
             snapshot.forEach(game => {
-                game.ref.remove();
-            });
-        }
-        else {
-            console.error('failed to get old games');
-        }
-    });
+                if (game.val().startTime < deleteGameTime) {
+                    updates[game.val().startTime] = null;
+                }
+                else if (game.val().startTime < closeGameTime) {
+                    if (game.val().status && game.val().status !== GameStatus[GameStatus.completed]) {
+                        //  game.child("status").getRef().set = GameStatus[GameStatus.completed];
+                        updates[game.val().startTime] = game.val();
+                        updates[game.val().startTime].status = GameStatus[GameStatus.completed];
 
-    return response.send('completed multiplayer games cleanup');
+                        console.log(game.val().startTime + ' has been closed');
+                    }
+                }
+            });
+            // console.log(updates);
+            return query.update(updates)
+        }
+        return 0;
+    }).then(() => {
+        console.log('all done: cleanupMultiplayerGames');
+        response.send('all done: cleanupMultiplayerGames');
+    }).catch(error => console.error(error));
+
+
+    // return response.send('completed multiplayer games cleanup');
 };
 
 const closeBrokenGames = function (response: functions.Response) {
@@ -227,33 +247,42 @@ const onGameAdded = function (snapshot, context) {
     const participants = Object.keys(game2['scoreCards']);
     const fancyTime = game2['startTime']
 
-    db.ref().child('multiplayerOngoing/games/' + gameID).set(game2);
-
-    snapshot.ref.remove();
-
-    participants.forEach(id => {
-        db.ref().child('playerData/' + id + '/multiplayerGame').set(gameID);
-        db.ref().child('playerData/' + id + '/openGames/' + gameID).set({
-            gameID: gameID,
-            status: GameStatus[GameStatus.ongoing],
-            startTime: fancyTime,
-        });
-    });
-
-    console.log('starting multiplayer game countdown');
     return new Promise((resolve) => {
-        setTimeout(() => {
-            const query = db.ref().child('/multiplayerOngoing/games/' + gameID);
-            query.transaction(function (game: any) {
-                if (game && game.status && game.status !== GameStatus[GameStatus.completed]) {
-                    game.status = GameStatus[GameStatus.completed];
-                }
-                return game;
-            }).then(() => {
-                resolve();
-            }).catch(error => console.error(error));
-        }, 900000);
+        db.ref().child('multiplayerOngoing/games/' + gameID).set(game2);
+
+        snapshot.ref.remove();
+
+        participants.forEach(id => {
+            db.ref().child('playerData/' + id + '/multiplayerGame').set(gameID);
+            db.ref().child('playerData/' + id + '/openGames/' + gameID).set({
+                gameID: gameID,
+                status: GameStatus[GameStatus.ongoing],
+                startTime: fancyTime,
+            });
+
+        });
+        resolve();
     });
+
+    // console.log('starting multiplayer game countdown');
+    // return new Promise((resolve) => {
+    //     setTimeout(() => {
+    //         console.log(gameID + ' has reached timeout');
+    //         const query = db.ref().child('/multiplayerOngoing/games/' + gameID);
+    //         query.transaction(function (game: any) {
+    //             if (game && game.status && game.status !== GameStatus[GameStatus.completed]) {
+    //                 game.status = GameStatus[GameStatus.completed];
+    //                 console.log(gameID + ' has been closed');
+    //             }
+    //             else{
+    //                 console.log(gameID + ' was already closed');
+    //             }
+    //             return game;
+    //         }).then(() => {
+    //             resolve();
+    //         }).catch(error => console.error(error));
+    //     }, 900000);
+    // });
 };
 
 const onPlayerAddedExistingGame = function (snapshot, context) {
@@ -279,14 +308,14 @@ const onPlayerAddedExistingGame = function (snapshot, context) {
 };
 
 
-const onPlayerAdded = function (snapshot, context) {  
+const onPlayerAdded = function (snapshot, context) {
 
     const ref = db.ref().child('multiplayer/');
     ref.transaction(function (transaction: any) {
         console.log('onPlayerAdded starts');
 
         if (transaction && transaction.PlayerQueue) {
-           // console.log('transaction');
+            // console.log('transaction');
             //console.log(transaction);
 
             const playerQueueNode = 'PlayerQueue';
@@ -331,9 +360,9 @@ const onPlayerAdded = function (snapshot, context) {
                 // const ID = getKey(snapshot.val(), true);
                 console.log(snapshot.key);
                 console.log('previous game key: ');
-                console.log( transaction.PlayerQueue[snapshot.key].multiplayerStatus);
+                console.log(transaction.PlayerQueue[snapshot.key].multiplayerStatus);
                 console.log('ongoing game key: ');
-                console.log( transaction.currentGame.gameID);
+                console.log(transaction.currentGame.gameID);
 
                 //check if we have an ongoing game with free space. Also check if it's the same game the player just completed
                 if (transaction.currentGame && transaction.currentGame.playerCount < 4 && transaction.currentGame.gameID != transaction.PlayerQueue[snapshot.key].multiplayerStatus) {
@@ -346,8 +375,8 @@ const onPlayerAdded = function (snapshot, context) {
                     //console.log(cutOff);
                     if (now < cutOff) {
                         console.log("current game exists and within five minutes");
-                      //  console.log(snapshot.val());
-                       // console.log(snapshot.key);
+                        //  console.log(snapshot.val());
+                        // console.log(snapshot.key);
 
                         transaction.currentGame.playersToAdd = transaction.currentGame.playersToAdd || {};
                         transaction.currentGame.playersToAdd[snapshot.key] = snapshot.val();

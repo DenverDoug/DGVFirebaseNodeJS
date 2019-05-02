@@ -12,7 +12,7 @@ import { onPlayerAdded, onPlayerAddedExistingGame, onPlayerRemoved, onGameAdded,
 exports.onPlayerAdded = functions.database.ref('/multiplayer/PlayerQueue/{pushId}/')
   .onCreate((snapshot, context) => {
     console.log("running On Player Added");
-    onPlayerAdded(snapshot, context);
+     onPlayerAdded(snapshot, context);
   });
 
 // when a player is removed from queue for multiplayer tournament:
@@ -58,12 +58,15 @@ exports.onMultiPlayerGameStatusUpdated = functions.database.ref('/multiplayerOng
     onMultiPlayerGameStatusUpdated(snapshot, context).catch(err => {
       console.error("wow");
     });
+
   });
 
 // cleanup expired and completed multiplayer games
 exports.cleanupMultiplayerGames = functions.https.onRequest((req, res) => {
   console.log("running Cleanup Multiplayer Games");
-  cleanupMultiplayerGames(res);
+
+   return cleanupMultiplayerGames(res);
+   
 });
 
 // fix expired but not resolved multiplayer games

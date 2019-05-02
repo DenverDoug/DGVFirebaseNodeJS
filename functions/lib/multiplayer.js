@@ -11,22 +11,38 @@ const playersInGame = 2;
 // });
 const cleanupMultiplayerGames = function (response) {
     const fancyTime = new Date();
-    const cuts = fancyTime.setHours(fancyTime.getHours() - 24);
-    const query = db.ref().child('multiplayerOngoing/games/').orderByChild('startTime').endAt(cuts);
-    console.log('fetching old games to remove');
-    query.once("value", function (snapshot) {
+    const closeGameTime = fancyTime.setMinutes(fancyTime.getMinutes() - 15);
+    const deleteGameTime = fancyTime.setHours(fancyTime.getHours() - 48);
+    const query = db.ref().child('multiplayerOngoing/games/');
+    console.log('fetching old games to remove nein');
+    console.log(closeGameTime);
+    console.log(deleteGameTime);
+    return query.once("value", function (snapshot) {
         if (snapshot.val() !== null) {
-            console.log('got old games to remove');
-            console.log(snapshot.val());
+            console.log('got games');
+            const updates = {};
             snapshot.forEach(game => {
-                game.ref.remove();
+                if (game.val().startTime < deleteGameTime) {
+                    updates[game.val().startTime] = null;
+                }
+                else if (game.val().startTime < closeGameTime) {
+                    if (game.val().status && game.val().status !== constants_1.GameStatus[constants_1.GameStatus.completed]) {
+                        //  game.child("status").getRef().set = GameStatus[GameStatus.completed];
+                        updates[game.val().startTime] = game.val();
+                        updates[game.val().startTime].status = constants_1.GameStatus[constants_1.GameStatus.completed];
+                        console.log(game.val().startTime + ' has been closed');
+                    }
+                }
             });
+            // console.log(updates);
+            return query.update(updates);
         }
-        else {
-            console.error('failed to get old games');
-        }
-    });
-    return response.send('completed multiplayer games cleanup');
+        return 0;
+    }).then(() => {
+        console.log('all done: cleanupMultiplayerGames');
+        response.send('all done: cleanupMultiplayerGames');
+    }).catch(error => console.error(error));
+    // return response.send('completed multiplayer games cleanup');
 };
 exports.cleanupMultiplayerGames = cleanupMultiplayerGames;
 const closeBrokenGames = function (response) {
@@ -181,30 +197,38 @@ const onGameAdded = function (snapshot, context) {
     const game2 = snapshot.val();
     const participants = Object.keys(game2['scoreCards']);
     const fancyTime = game2['startTime'];
-    db.ref().child('multiplayerOngoing/games/' + gameID).set(game2);
-    snapshot.ref.remove();
-    participants.forEach(id => {
-        db.ref().child('playerData/' + id + '/multiplayerGame').set(gameID);
-        db.ref().child('playerData/' + id + '/openGames/' + gameID).set({
-            gameID: gameID,
-            status: constants_1.GameStatus[constants_1.GameStatus.ongoing],
-            startTime: fancyTime,
-        });
-    });
-    console.log('starting multiplayer game countdown');
     return new Promise((resolve) => {
-        setTimeout(() => {
-            const query = db.ref().child('/multiplayerOngoing/games/' + gameID);
-            query.transaction(function (game) {
-                if (game && game.status && game.status !== constants_1.GameStatus[constants_1.GameStatus.completed]) {
-                    game.status = constants_1.GameStatus[constants_1.GameStatus.completed];
-                }
-                return game;
-            }).then(() => {
-                resolve();
-            }).catch(error => console.error(error));
-        }, 900000);
+        db.ref().child('multiplayerOngoing/games/' + gameID).set(game2);
+        snapshot.ref.remove();
+        participants.forEach(id => {
+            db.ref().child('playerData/' + id + '/multiplayerGame').set(gameID);
+            db.ref().child('playerData/' + id + '/openGames/' + gameID).set({
+                gameID: gameID,
+                status: constants_1.GameStatus[constants_1.GameStatus.ongoing],
+                startTime: fancyTime,
+            });
+        });
+        resolve();
     });
+    // console.log('starting multiplayer game countdown');
+    // return new Promise((resolve) => {
+    //     setTimeout(() => {
+    //         console.log(gameID + ' has reached timeout');
+    //         const query = db.ref().child('/multiplayerOngoing/games/' + gameID);
+    //         query.transaction(function (game: any) {
+    //             if (game && game.status && game.status !== GameStatus[GameStatus.completed]) {
+    //                 game.status = GameStatus[GameStatus.completed];
+    //                 console.log(gameID + ' has been closed');
+    //             }
+    //             else{
+    //                 console.log(gameID + ' was already closed');
+    //             }
+    //             return game;
+    //         }).then(() => {
+    //             resolve();
+    //         }).catch(error => console.error(error));
+    //     }, 900000);
+    // });
 };
 exports.onGameAdded = onGameAdded;
 const onPlayerAddedExistingGame = function (snapshot, context) {

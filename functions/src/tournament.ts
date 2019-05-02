@@ -128,7 +128,7 @@ function startTournament(response: functions.Response) {
 // assign scores + set participants
 // set status to closed
 function resolveTournament(response: functions.Response) {
-    getTournament(TournamentStatus.closedNotScored).then((tournament: any) => {
+     getTournament(TournamentStatus.closedNotScored).then((tournament: any) => {
 
         console.log("got tournament");
 
