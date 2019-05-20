@@ -13,10 +13,12 @@ const getProTourResults = function (scoreCollection) {
     for (const key of Object.keys(scoreCollection)) {
         console.log(scoreCollection[key]);
         var total = 0;
+        var par = 0;
         var valid = true;
         for (var it = 0; it < 4; it++) {
             if (scoreCollection[key].scores[it] !== 0 && scoreCollection[key].scores[it] !== 999) {
                 total += scoreCollection[key].scores[it];
+                par += scoreCollection[key].par[it];
             }
             else {
                 valid = false;
@@ -24,14 +26,26 @@ const getProTourResults = function (scoreCollection) {
         }
         tournamentResults.push({
             playerID: key,
+            playerName: scoreCollection[key].playerName,
             score: total,
+            parDiff: par,
             completeRound: valid,
             position: -1,
+            top3: [],
         });
     }
     const sortedResults = tournamentResults.sort(function (a, b) {
         return a.score - b.score;
     });
+    const firstPlace = {};
+    const secondPlace = {};
+    const thirdPlace = {};
+    firstPlace['playerName'] = sortedResults[Object.keys(sortedResults)[0]].playerName;
+    firstPlace['score'] = sortedResults[Object.keys(sortedResults)[0]].score;
+    secondPlace['playerName'] = sortedResults[Object.keys(sortedResults)[1]].playerName;
+    secondPlace['score'] = sortedResults[Object.keys(sortedResults)[1]].score;
+    thirdPlace['playerName'] = sortedResults[Object.keys(sortedResults)[2]].playerName;
+    thirdPlace['score'] = sortedResults[Object.keys(sortedResults)[2]].score;
     sortedResults.forEach(function (result, index) {
         if (index === 0) {
             result.position = index + 1;
@@ -44,6 +58,10 @@ const getProTourResults = function (scoreCollection) {
                 result.position = index + 1;
             }
         }
+        result.top3.push(firstPlace);
+        result.top3.push(secondPlace);
+        result.top3.push(thirdPlace);
+        console.log(result.top3);
         positions.push(result);
     });
     return positions;
@@ -115,6 +133,8 @@ function resolveProTour(response, request) {
                 updates[result.playerID + '/proTourResult/position'] = result.position;
                 updates[result.playerID + '/proTourResult/score'] = result.score;
                 updates[result.playerID + '/proTourResult/completeRound'] = result.completeRound;
+                updates[result.playerID + '/proTourResult/top3'] = result.top3;
+                updates[result.playerID + '/proTourResult/parDiff'] = result.parDiff;
             });
             console.log(updates);
             return playerQuery.update(updates, function () {
