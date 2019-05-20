@@ -68,6 +68,7 @@ const startNextTournament = function (lastTournamentKey) {
         }
         else {
             db.ref().child('tournaments/' + key).update({ status: constants_1.TournamentStatus[constants_1.TournamentStatus.current], scores: {} });
+            db.ref().child('currentOpen').set(key);
         }
     };
     const getFirstTournament = function () {

@@ -6,6 +6,7 @@ admin.initializeApp();
 
 import { resolveTournament, startTournament } from './tournament'; // fancy tournaments
 import { onPlayerAdded, onPlayerAddedExistingGame, onPlayerRemoved, onGameAdded, onMultiPlayerStatusUpdated, onMultiPlayerGameStatusUpdated, cleanupMultiplayerGames, closeBrokenGames } from './multiplayer';
+import { startNewProTour, unlockProTourRound, resolveProTour } from './protour';
 
 // when a player is queued for multiplayer tournament:
 // starts a multiplayer game when there are 4 players in the queue
@@ -64,9 +65,29 @@ exports.onMultiPlayerGameStatusUpdated = functions.database.ref('/multiplayerOng
 // cleanup expired and completed multiplayer games
 exports.cleanupMultiplayerGames = functions.https.onRequest((req, res) => {
   console.log("running Cleanup Multiplayer Games");
-   return cleanupMultiplayerGames(res);
-   
+   return cleanupMultiplayerGames(res);   
 });
+
+exports.startNewProTour = functions.https.onRequest((req, res) => {
+  console.log('start new pro tour');
+  return startNewProTour(res);
+});
+
+exports.unlockProTourRound = functions.https.onRequest((req, res) => {
+  console.log('unlock pro tour round');
+  return unlockProTourRound(res, req);
+});
+
+exports.resolveProTour = functions.https.onRequest((req, res) => {
+  console.log('resolve pro tour');
+  return resolveProTour(res, req);
+});
+
+// // cleanup expired and completed multiplayer games
+// exports.startNewProTour = functions.https.onRequest((req, res) => {
+//   console.log('start new pro tour');
+//    return startNewProTour(res, req);
+// });
 
 // fix expired but not resolved multiplayer games
 exports.closeBrokenGames = functions.https.onRequest((req, res) => {

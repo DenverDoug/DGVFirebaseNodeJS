@@ -5,6 +5,7 @@ const admin = require("firebase-admin");
 admin.initializeApp();
 const tournament_1 = require("./tournament"); // fancy tournaments
 const multiplayer_1 = require("./multiplayer");
+const protour_1 = require("./protour");
 // when a player is queued for multiplayer tournament:
 // starts a multiplayer game when there are 4 players in the queue
 exports.onPlayerAdded = functions.database.ref('/multiplayer/PlayerQueue/{pushId}/')
@@ -57,6 +58,23 @@ exports.cleanupMultiplayerGames = functions.https.onRequest((req, res) => {
     console.log("running Cleanup Multiplayer Games");
     return multiplayer_1.cleanupMultiplayerGames(res);
 });
+exports.startNewProTour = functions.https.onRequest((req, res) => {
+    console.log('start new pro tour');
+    return protour_1.startNewProTour(res);
+});
+exports.unlockProTourRound = functions.https.onRequest((req, res) => {
+    console.log('unlock pro tour round');
+    return protour_1.unlockProTourRound(res, req);
+});
+exports.resolveProTour = functions.https.onRequest((req, res) => {
+    console.log('resolve pro tour');
+    return protour_1.resolveProTour(res, req);
+});
+// // cleanup expired and completed multiplayer games
+// exports.startNewProTour = functions.https.onRequest((req, res) => {
+//   console.log('start new pro tour');
+//    return startNewProTour(res, req);
+// });
 // fix expired but not resolved multiplayer games
 exports.closeBrokenGames = functions.https.onRequest((req, res) => {
     console.log("running fix multiplayer games");
