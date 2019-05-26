@@ -132,8 +132,7 @@ function closeOpenTournaments(response, request) {
     console.log('close and lock and never open again open v1');
     const query = db.ref().child('openTournament/');
     const updates = {};
-    const divisionsTest = ['Test'];
-    divisionsTest.forEach(function (division) {
+    divisions.forEach(function (division) {
         updates[division + '/closed'] = true;
     });
     return query.update(updates, function () {
