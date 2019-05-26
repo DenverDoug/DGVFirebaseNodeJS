@@ -2,8 +2,8 @@
 
 import * as admin from 'firebase-admin';
 import * as functions from 'firebase-functions';
-import { getData, getKey, getRandomKey } from './utilities';
-import { TournamentStatus, TournamentKeys } from './constants';
+import { getRandomKey } from './utilities';
+import { TournamentKeys } from './constants';
 
 const db = admin.database();
 const divisions = ['Recreational', 'Advanced', 'Pro'];
@@ -11,9 +11,6 @@ const divisions = ['Recreational', 'Advanced', 'Pro'];
 const getProTourResults = function (scoreCollection) {
     const tournamentResults = [];
     const positions = [];
-
-    //console.log("scores");
-    //console.log(scores);
 
     for (const key of Object.keys(scoreCollection)) {
         console.log(scoreCollection[key]);
@@ -28,6 +25,7 @@ const getProTourResults = function (scoreCollection) {
             }
             else {
                 valid = false;
+                total = 999;
             }
         }
         
