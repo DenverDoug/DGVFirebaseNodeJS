@@ -6,6 +6,7 @@ admin.initializeApp();
 const tournament_1 = require("./tournament"); // fancy tournaments
 const multiplayer_1 = require("./multiplayer");
 const protour_1 = require("./protour");
+const opentournament_1 = require("./opentournament");
 // when a player is queued for multiplayer tournament:
 // starts a multiplayer game when there are 4 players in the queue
 exports.onPlayerAdded = functions.database.ref('/multiplayer/PlayerQueue/{pushId}/')
@@ -69,6 +70,14 @@ exports.unlockProTourRound = functions.https.onRequest((req, res) => {
 exports.resolveProTour = functions.https.onRequest((req, res) => {
     console.log('resolve pro tour');
     return protour_1.resolveProTour(res, req);
+});
+exports.startNewOpen = functions.https.onRequest((req, res) => {
+    console.log('start new pro tour');
+    return opentournament_1.startNewOpen(res);
+});
+exports.resolveOpen = functions.https.onRequest((req, res) => {
+    console.log('resolve pro tour');
+    return opentournament_1.resolveOpen(res, req);
 });
 // // cleanup expired and completed multiplayer games
 // exports.startNewProTour = functions.https.onRequest((req, res) => {
