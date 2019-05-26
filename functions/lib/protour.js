@@ -8,8 +8,6 @@ const divisions = ['Recreational', 'Advanced', 'Pro'];
 const getProTourResults = function (scoreCollection) {
     const tournamentResults = [];
     const positions = [];
-    //console.log("scores");
-    //console.log(scores);
     for (const key of Object.keys(scoreCollection)) {
         console.log(scoreCollection[key]);
         var total = 0;
@@ -22,6 +20,7 @@ const getProTourResults = function (scoreCollection) {
             }
             else {
                 valid = false;
+                total = 999;
             }
         }
         tournamentResults.push({

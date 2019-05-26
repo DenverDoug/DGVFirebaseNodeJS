@@ -72,18 +72,17 @@ exports.resolveProTour = functions.https.onRequest((req, res) => {
     return protour_1.resolveProTour(res, req);
 });
 exports.startNewOpen = functions.https.onRequest((req, res) => {
-    console.log('start new pro tour');
+    console.log('start open');
     return opentournament_1.startNewOpen(res);
 });
 exports.resolveOpen = functions.https.onRequest((req, res) => {
-    console.log('resolve pro tour');
+    console.log('resolve open');
     return opentournament_1.resolveOpen(res, req);
 });
-// // cleanup expired and completed multiplayer games
-// exports.startNewProTour = functions.https.onRequest((req, res) => {
-//   console.log('start new pro tour');
-//    return startNewProTour(res, req);
-// });
+exports.closeOpen = functions.https.onRequest((req, res) => {
+    console.log('close open');
+    return opentournament_1.closeOpenTournaments(res, req);
+});
 // fix expired but not resolved multiplayer games
 exports.closeBrokenGames = functions.https.onRequest((req, res) => {
     console.log("running fix multiplayer games");

@@ -8,8 +8,6 @@ const divisions = ['Recreational', 'Advanced', 'Pro'];
 const getOpenResults = function (scoreCollection) {
     const tournamentResults = [];
     const positions = [];
-    //console.log("scores");
-    //console.log(scores);
     for (const key of Object.keys(scoreCollection)) {
         console.log(scoreCollection[key]);
         tournamentResults.push({
@@ -71,7 +69,7 @@ const getOpenResults = function (scoreCollection) {
     });
     return positions;
 };
-//start new open tournament
+// start new open tournament
 function startNewOpen(response) {
     console.log('start new open v2');
     const roundHoles = utilities_1.getRandomKey(constants_1.TournamentKeys);
@@ -86,6 +84,7 @@ function startNewOpen(response) {
                 updates[division + '/week/'] = week + 1;
                 updates[division + '/division/'] = iter;
                 updates[division + '/scores/'] = null;
+                updates[division + '/closed/'] = false;
             });
             query.update(updates, function () {
                 console.log('all done: start new open');
@@ -96,7 +95,7 @@ function startNewOpen(response) {
 }
 exports.startNewOpen = startNewOpen;
 ;
-// Close open tournament and assign reward objects to players
+// Resolve open tournament and assign reward objects to players
 function resolveOpen(response, request) {
     console.log('resolve open v1');
     const query = db.ref().child('openTournament/');
@@ -128,4 +127,19 @@ function resolveOpen(response, request) {
     });
 }
 exports.resolveOpen = resolveOpen;
+// closes and locks open tournaments forever
+function closeOpenTournaments(response, request) {
+    console.log('close and lock and never open again open v1');
+    const query = db.ref().child('openTournament/');
+    const updates = {};
+    const divisionsTest = ['Test'];
+    divisionsTest.forEach(function (division) {
+        updates[division + '/closed'] = true;
+    });
+    return query.update(updates, function () {
+        console.log('all done: closed all open divisions');
+        response.send('all done: closed all open divisions');
+    });
+}
+exports.closeOpenTournaments = closeOpenTournaments;
 //# sourceMappingURL=opentournament.js.map
