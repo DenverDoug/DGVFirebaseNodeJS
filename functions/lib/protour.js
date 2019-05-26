@@ -92,48 +92,89 @@ function startNewProTour(response) {
     }
     ;
     const query = db.ref().child('proTour/');
-    return query.child('Recreational/week').once("value", function (snapshot) {
-        if (snapshot.val() !== null) {
-            console.log('got pro tour week');
-            const week = snapshot.val();
-            const updates = {};
-            divisions.forEach(function (division, iter) {
-                updates[division + '/rounds/0/unlocked'] = true;
-                updates[division + '/rounds/0/holesID'] = roundHoles[0];
-                updates[division + '/rounds/1/unlocked'] = false;
-                updates[division + '/rounds/1/holesID'] = roundHoles[1];
-                updates[division + '/rounds/2/unlocked'] = false;
-                updates[division + '/rounds/2/holesID'] = roundHoles[2];
-                updates[division + '/rounds/3/unlocked'] = false;
-                updates[division + '/rounds/3/holesID'] = roundHoles[3];
-                updates[division + '/week/'] = week + 1;
-                updates[division + '/division/'] = iter;
-                updates[division + '/scores/'] = null;
-            });
-            query.update(updates, function () {
-                console.log('all done: start new protour');
-                response.send('all done: start new protour');
-            });
+    return query.child('currentRound').once("value", function (snap) {
+        if (snap.val() !== null) {
+            const currentRound = snap.val();
+            if (currentRound > 4) {
+                console.log('current round is 5, starting new pro tour');
+                return query.child('Recreational/week').once("value", function (snapshot) {
+                    if (snapshot.val() !== null) {
+                        console.log('got pro tour week');
+                        const week = snapshot.val();
+                        const updates = {};
+                        divisions.forEach(function (division, iter) {
+                            updates[division + '/rounds/0/unlocked'] = true;
+                            updates[division + '/rounds/0/holesID'] = roundHoles[0];
+                            updates[division + '/rounds/1/unlocked'] = false;
+                            updates[division + '/rounds/1/holesID'] = roundHoles[1];
+                            updates[division + '/rounds/2/unlocked'] = false;
+                            updates[division + '/rounds/2/holesID'] = roundHoles[2];
+                            updates[division + '/rounds/3/unlocked'] = false;
+                            updates[division + '/rounds/3/holesID'] = roundHoles[3];
+                            updates[division + '/week/'] = week + 1;
+                            updates[division + '/division/'] = iter;
+                            updates[division + '/scores/'] = null;
+                            updates[division + '/closed/'] = false;
+                        });
+                        updates['currentRound/'] = 0; // tournament is officially opened
+                        return query.update(updates, function () {
+                            console.log('all done: start new protour');
+                            response.send('all done: start new protour');
+                        });
+                    }
+                    else {
+                        response.send('could not load pro tour week');
+                        return 0;
+                    }
+                });
+            }
+            else {
+                response.send('skipping starting new pro tour, current round is ' + currentRound);
+                console.log('skipping starting new pro tour, current round is ' + currentRound);
+                return 0;
+            }
+        }
+        else {
+            response.send('could not load current round in start pro tour');
+            return 0;
         }
     }).catch(error => console.error(error));
 }
 exports.startNewProTour = startNewProTour;
 ;
 // Unlock a Pro Tour Round. 
-function unlockProTourRound(response, request) {
+function unlockNextProTourRound(response) {
     console.log('unlock round v1');
-    const round = request.query.round;
     const query = db.ref().child('proTour/');
     const updates = {};
-    updates['/Recreational/rounds/' + round + '/unlocked'] = true;
-    updates['/Advanced/rounds/' + round + '/unlocked'] = true;
-    updates['/Pro/rounds/' + round + '/unlocked'] = true;
-    return query.update(updates, function () {
-        console.log('all done: round unlocked');
-        response.send('all done: round unlocked');
-    });
+    return query.child('currentRound').once("value", function (snapshot) {
+        if (snapshot.val() !== null) {
+            const currentRound = snapshot.val();
+            const round = currentRound + 1;
+            updates['/currentRound'] = round;
+            if (round < 4) {
+                updates['/Recreational/rounds/' + round + '/unlocked'] = true;
+                updates['/Advanced/rounds/' + round + '/unlocked'] = true;
+                updates['/Pro/rounds/' + round + '/unlocked'] = true;
+            }
+            else if (round > 4) {
+                updates['/Recreational/closed'] = true;
+                updates['/Advanced/closed'] = true;
+                updates['/Pro/closed'] = true;
+            }
+            return query.update(updates, function () {
+                console.log('all done: round unlocked');
+                response.send('all done: round unlocked');
+                return 0;
+            });
+        }
+        else {
+            response.send('could not load current round');
+            return 0;
+        }
+    }).catch(error => console.error(error));
 }
-exports.unlockProTourRound = unlockProTourRound;
+exports.unlockNextProTourRound = unlockNextProTourRound;
 ;
 // Close pro tour and assign reward objects to players
 function resolveProTour(response, request) {
@@ -142,27 +183,43 @@ function resolveProTour(response, request) {
     const playerQuery = db.ref().child('playerData/');
     const division = request.query.division;
     const updates = {};
-    return query.child(division + '/scores/').once("value", function (snapshot) {
-        if (snapshot.val() !== null) {
-            console.log('got scores');
-            const results = getProTourResults(snapshot.val());
-            results.forEach(result => {
-                updates[result.playerID + '/proTourResult/position'] = result.position;
-                updates[result.playerID + '/proTourResult/score'] = result.score;
-                updates[result.playerID + '/proTourResult/completeRound'] = result.completeRound;
-                updates[result.playerID + '/proTourResult/top3'] = result.top3;
-                updates[result.playerID + '/proTourResult/parDiff'] = result.parDiff;
-                updates[result.playerID + '/proTourResult/division'] = division;
-            });
-            console.log(updates);
-            return playerQuery.update(updates, function () {
-                console.log('all done: pro tour resolved');
-                response.send('all done: pro tour resolved');
-            });
+    return playerQuery.child('/currentRound/').once("value", function (snap) {
+        if (snap.val() !== null) {
+            const currentRound = snap.val();
+            if (currentRound > 4) {
+                console.log('current round is 5, time to resolve pro tour');
+                return query.child(division + '/scores/').once("value", function (snapshot) {
+                    if (snapshot.val() !== null) {
+                        console.log('got scores');
+                        const results = getProTourResults(snapshot.val());
+                        results.forEach(result => {
+                            updates[result.playerID + '/proTourResult/position'] = result.position;
+                            updates[result.playerID + '/proTourResult/score'] = result.score;
+                            updates[result.playerID + '/proTourResult/completeRound'] = result.completeRound;
+                            updates[result.playerID + '/proTourResult/top3'] = result.top3;
+                            updates[result.playerID + '/proTourResult/parDiff'] = result.parDiff;
+                            updates[result.playerID + '/proTourResult/division'] = division;
+                        });
+                        console.log(updates);
+                        return playerQuery.update(updates, function () {
+                            console.log('all done: pro tour resolved');
+                            response.send('all done: pro tour resolved');
+                        });
+                    }
+                    else {
+                        console.log('faaak: pro tour not resolved');
+                        response.send('faaak: pro tour not resolved');
+                        return 0;
+                    }
+                });
+            }
+            else {
+                response.send('current rount is not 5 currentRound: ' + currentRound);
+                return 0;
+            }
         }
         else {
-            console.log('faaak: pro tour not resolved');
-            response.send('faaak: pro tour not resolved');
+            response.send('no currentRound loaded');
             return 0;
         }
     });

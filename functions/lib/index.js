@@ -65,7 +65,7 @@ exports.startNewProTour = functions.https.onRequest((req, res) => {
 });
 exports.unlockProTourRound = functions.https.onRequest((req, res) => {
     console.log('unlock pro tour round');
-    return protour_1.unlockProTourRound(res, req);
+    return protour_1.unlockNextProTourRound(res);
 });
 exports.resolveProTour = functions.https.onRequest((req, res) => {
     console.log('resolve pro tour');

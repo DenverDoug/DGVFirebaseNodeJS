@@ -6,7 +6,7 @@ admin.initializeApp();
 
 import { resolveTournament, startTournament } from './tournament'; // fancy tournaments
 import { onPlayerAdded, onPlayerAddedExistingGame, onPlayerRemoved, onGameAdded, onMultiPlayerStatusUpdated, onMultiPlayerGameStatusUpdated, cleanupMultiplayerGames, closeBrokenGames } from './multiplayer';
-import { startNewProTour, unlockProTourRound, resolveProTour } from './protour';
+import { startNewProTour, unlockNextProTourRound, resolveProTour } from './protour';
 import { startNewOpen, resolveOpen, closeOpenTournaments } from './opentournament';
 
 // when a player is queued for multiplayer tournament:
@@ -76,7 +76,7 @@ exports.startNewProTour = functions.https.onRequest((req, res) => {
 
 exports.unlockProTourRound = functions.https.onRequest((req, res) => {
   console.log('unlock pro tour round');
-  return unlockProTourRound(res, req);
+  return unlockNextProTourRound(res);
 });
 
 exports.resolveProTour = functions.https.onRequest((req, res) => {
