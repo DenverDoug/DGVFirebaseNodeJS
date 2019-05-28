@@ -5,7 +5,7 @@ import * as admin from 'firebase-admin';
 admin.initializeApp();
 
 import { resolveTournament, startTournament } from './tournament'; // fancy tournaments
-import { onPlayerAdded, onPlayerAddedExistingGame, onPlayerRemoved, onGameAdded, onMultiPlayerStatusUpdated, onMultiPlayerGameStatusUpdated, cleanupMultiplayerGames, closeBrokenGames } from './multiplayer';
+import { onPlayerAdded, onPlayerAddedExistingGame, onPlayerRemoved, onGameAdded, onMultiPlayerStatusUpdated, onMultiPlayerGameStatusUpdated, closeOldMultiplayerGames, deleteOldMultiplayerGames } from './multiplayer';
 import { startNewProTour, unlockProTourRound, resolveProTour } from './protour';
 import { startNewOpen, resolveOpen } from './opentournament';
 
@@ -64,9 +64,9 @@ exports.onMultiPlayerGameStatusUpdated = functions.database.ref('/multiplayerOng
   });
 
 // cleanup expired and completed multiplayer games
-exports.cleanupMultiplayerGames = functions.https.onRequest((req, res) => {
+exports.closeOldMultiplayerGames = functions.https.onRequest((req, res) => {
   console.log("running Cleanup Multiplayer Games");
-   return cleanupMultiplayerGames(res);   
+   return closeOldMultiplayerGames(res);   
 });
 
 exports.startNewProTour = functions.https.onRequest((req, res) => {
@@ -94,17 +94,10 @@ exports.resolveOpen = functions.https.onRequest((req, res) => {
   return resolveOpen(res, req);
 });
 
-
-// // cleanup expired and completed multiplayer games
-// exports.startNewProTour = functions.https.onRequest((req, res) => {
-//   console.log('start new pro tour');
-//    return startNewProTour(res, req);
-// });
-
 // fix expired but not resolved multiplayer games
-exports.closeBrokenGames = functions.https.onRequest((req, res) => {
+exports.deleteOldMultiplayerGames = functions.https.onRequest((req, res) => {
   console.log("running fix multiplayer games");
-  closeBrokenGames(res);
+  deleteOldMultiplayerGames(res);
 });
 
 // resolves fancy tournament

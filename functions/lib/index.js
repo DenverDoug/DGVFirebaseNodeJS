@@ -55,9 +55,9 @@ exports.onMultiPlayerGameStatusUpdated = functions.database.ref('/multiplayerOng
     });
 });
 // cleanup expired and completed multiplayer games
-exports.cleanupMultiplayerGames = functions.https.onRequest((req, res) => {
+exports.closeOldMultiplayerGames = functions.https.onRequest((req, res) => {
     console.log("running Cleanup Multiplayer Games");
-    return multiplayer_1.cleanupMultiplayerGames(res);
+    return multiplayer_1.closeOldMultiplayerGames(res);
 });
 exports.startNewProTour = functions.https.onRequest((req, res) => {
     console.log('start new pro tour');
@@ -79,15 +79,10 @@ exports.resolveOpen = functions.https.onRequest((req, res) => {
     console.log('resolve pro tour');
     return opentournament_1.resolveOpen(res, req);
 });
-// // cleanup expired and completed multiplayer games
-// exports.startNewProTour = functions.https.onRequest((req, res) => {
-//   console.log('start new pro tour');
-//    return startNewProTour(res, req);
-// });
 // fix expired but not resolved multiplayer games
-exports.closeBrokenGames = functions.https.onRequest((req, res) => {
+exports.deleteOldMultiplayerGames = functions.https.onRequest((req, res) => {
     console.log("running fix multiplayer games");
-    multiplayer_1.closeBrokenGames(res);
+    multiplayer_1.deleteOldMultiplayerGames(res);
 });
 // resolves fancy tournament
 exports.resolveTournament = functions.https.onRequest((req, res) => {
