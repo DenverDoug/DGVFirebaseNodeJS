@@ -15,10 +15,13 @@ const closeOldMultiplayerGames = function (response) {
     const cutOffTime = fancyTime.setMinutes(fancyTime.getMinutes() - 30);
     const query = db.ref().child('multiplayerOngoing/games/');
     console.log('fetching old games to close');
-    //    return query.limitToLast(100).once("value", function (snapshot: any) {
-    return query.orderByKey().startAt(closeGameTime).endAt(cutOffTime).once("value", function (snapshot) {
+    console.log(fancyTime);
+    console.log(fancyTime.toString());
+    return query.limitToLast(100).once("value", function (snapshot) {
+        //return query.orderByKey().startAt(closeGameTime.toString()).endAt(cutOffTime.toString()).once("value", function (snapshot: any) {
         if (snapshot.val() !== null) {
             console.log('got games');
+            console.log();
             const updates = {};
             snapshot.forEach(game => {
                 if (game.val().startTime < closeGameTime) {

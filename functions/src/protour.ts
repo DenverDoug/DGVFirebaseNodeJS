@@ -6,7 +6,7 @@ import { getRandomKey } from './utilities';
 import { TournamentKeys } from './constants';
 
 const db = admin.database();
-const divisions = ['Recreational', 'Advanced', 'Pro'];
+const divisions = ['Recreational', 'Advanced', 'Pro', 'Intermediate'];
 
 const getProTourResults = function (scoreCollection) {
     const tournamentResults = [];
@@ -168,11 +168,13 @@ function unlockNextProTourRound(response: functions.Response) {
                 updates['/Recreational/rounds/' + round + '/unlocked'] = true;
                 updates['/Advanced/rounds/' + round + '/unlocked'] = true;
                 updates['/Pro/rounds/' + round + '/unlocked'] = true;
+                updates['/Intermediate/rounds/' + round + '/unlocked'] = true;
             }
             else if (round > 4) {
                 updates['/Recreational/closed'] = true;
                 updates['/Advanced/closed'] = true;
                 updates['/Pro/closed'] = true;
+                updates['/Intermediate/closed'] = true;
             }
 
             return query.update(updates, function () {

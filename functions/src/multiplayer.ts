@@ -4,6 +4,7 @@ import * as admin from 'firebase-admin';
 import * as functions from 'firebase-functions';
 import { getPlayerPositions, getRandomKey, getKey } from './utilities';
 import { MultiplayerStatus, GameStatus, TournamentKeys, UncompletedGameScore } from './constants';
+import { debug } from 'util';
 
 const db = admin.database();
 const playersInGame = 2;
@@ -20,11 +21,14 @@ const closeOldMultiplayerGames = function (response: functions.Response) {
     const query = db.ref().child('multiplayerOngoing/games/');
 
     console.log('fetching old games to close');
+    console.log(fancyTime);
+    console.log(fancyTime.toString());
 
-//    return query.limitToLast(100).once("value", function (snapshot: any) {
-      return query.orderByKey().startAt(closeGameTime).endAt(cutOffTime).once("value", function (snapshot: any) {
+    return query.limitToLast(100).once("value", function (snapshot: any) {
+      //return query.orderByKey().startAt(closeGameTime.toString()).endAt(cutOffTime.toString()).once("value", function (snapshot: any) {
         if (snapshot.val() !== null) {
             console.log('got games');
+            console.log();
             const updates = {};
 
             snapshot.forEach(game => {                

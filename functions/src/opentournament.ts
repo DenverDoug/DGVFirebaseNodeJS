@@ -6,7 +6,7 @@ import { getData, getKey, getRandomKey } from './utilities';
 import { TournamentStatus, TournamentKeys } from './constants';
 
 const db = admin.database();
-const divisions = ['Recreational', 'Advanced', 'Pro'];
+const divisions = ['Recreational', 'Advanced', 'Pro', 'Intermediate'];
 
 const getOpenResults = function (scoreCollection) {
     const tournamentResults = [];
