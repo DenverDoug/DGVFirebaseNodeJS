@@ -7,8 +7,6 @@ import { TournamentStatus } from './constants';
 
 const db = admin.database();
 
-
-
 const getTournament = function (status: TournamentStatus) {
     return new Promise((resolve, reject) => {
         const getTournamentQuery = db.ref().child('tournaments/').orderByChild("status").equalTo(TournamentStatus[status]);
