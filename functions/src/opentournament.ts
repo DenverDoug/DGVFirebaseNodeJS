@@ -6,7 +6,7 @@ import { getData, getKey, getRandomKey } from './utilities';
 import { TournamentStatus, TournamentKeys } from './constants';
 
 const db = admin.database();
-const divisions = ['Recreational', 'Advanced', 'Pro', 'Intermediate'];
+const divisions = ['Recreational', 'Advanced', 'Pro'];
 
 const getOpenResults = function (scoreCollection) {
     const tournamentResults = [];
@@ -85,7 +85,7 @@ function startNewOpen(response: functions.Response) {
 
     const query = db.ref().child('openTournament/');
 
-    return query.child('Recreational/week').once("value", function (snapshot: any) {
+    return query.child('Recreational/properties/week').once("value", function (snapshot: any) {
         if (snapshot.val() !== null) {
             console.log('got open week');
             const week = snapshot.val();
@@ -97,6 +97,11 @@ function startNewOpen(response: functions.Response) {
                 updates[division + '/division/'] = iter;
                 updates[division + '/scores/'] = null;
                 updates[division + '/closed/'] = false;
+
+                updates[division + '/properties/round'] = roundHoles;
+                updates[division + '/properties/week/'] = week + 1;
+                updates[division + '/properties/division/'] = iter;                
+                updates[division + '/properties/closed/'] = false;
             })
             query.update(updates, function () {
                 console.log('all done: start new open');
@@ -146,7 +151,7 @@ function closeOpenTournaments(response: functions.Response, request: functions.R
     const updates = {};
 
     divisions.forEach(function (division) {
-        updates[division + '/closed'] = true;
+        updates[division + '/properties/closed'] = true;
     });
 
     return query.update(updates, function () {

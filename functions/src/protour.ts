@@ -6,7 +6,7 @@ import { getRandomKey } from './utilities';
 import { TournamentKeys } from './constants';
 
 const db = admin.database();
-const divisions = ['Recreational', 'Advanced', 'Pro', 'Intermediate'];
+const divisions = ['Recreational', 'Advanced', 'Pro'];
 
 const getProTourResults = function (scoreCollection) {
     const tournamentResults = [];
@@ -37,7 +37,6 @@ const getProTourResults = function (scoreCollection) {
             completeRound: valid,
             position: -1,
             top3: [],
-
         });
     }
     const sortedResults = tournamentResults.sort(function (a, b) {
@@ -107,7 +106,7 @@ function startNewProTour(response: functions.Response) {
             const currentRound = snap.val();
             if (currentRound > 4) {
                 console.log('current round is 5, starting new pro tour');
-                return query.child('Recreational/week').once("value", function (snapshot: any) {
+                return query.child('Recreational/tourProperties/week').once("value", function (snapshot: any) {
                     if (snapshot.val() !== null) {
                         console.log('got pro tour week');
                         const week = snapshot.val();
@@ -122,9 +121,22 @@ function startNewProTour(response: functions.Response) {
                             updates[division + '/rounds/3/unlocked'] = false;
                             updates[division + '/rounds/3/holesID'] = roundHoles[3];
                             updates[division + '/week/'] = week + 1;
-                            updates[division + '/division/'] = iter;
-                            updates[division + '/scores/'] = null;
+                            updates[division + '/division/'] = iter;                            
                             updates[division + '/closed/'] = false;
+
+                            updates[division + 'tourProperties/rounds/0/unlocked'] = true;
+                            updates[division + 'tourProperties/rounds/0/holesID'] = roundHoles[0];
+                            updates[division + 'tourProperties/rounds/1/unlocked'] = false;
+                            updates[division + 'tourProperties/rounds/1/holesID'] = roundHoles[1];
+                            updates[division + 'tourProperties/rounds/2/unlocked'] = false;
+                            updates[division + 'tourProperties/rounds/2/holesID'] = roundHoles[2];
+                            updates[division + 'tourProperties/rounds/3/unlocked'] = false;
+                            updates[division + 'tourProperties/rounds/3/holesID'] = roundHoles[3];
+                            updates[division + 'tourProperties/week/'] = week + 1;
+                            updates[division + 'tourProperties/division/'] = iter;
+                            updates[division + '/scores/'] = null;
+                            updates[division + 'tourProperties/closed/'] = false;
+                            
                         });
 
                         updates['currentRound/'] = 0; // tournament is officially opened
@@ -165,16 +177,14 @@ function unlockNextProTourRound(response: functions.Response) {
             updates['/currentRound'] = round;
 
             if (round < 4) {
-                updates['/Recreational/rounds/' + round + '/unlocked'] = true;
-                updates['/Advanced/rounds/' + round + '/unlocked'] = true;
-                updates['/Pro/rounds/' + round + '/unlocked'] = true;
-                updates['/Intermediate/rounds/' + round + '/unlocked'] = true;
+                updates['/Recreational/tourProperties/rounds/' + round + '/unlocked'] = true;
+                updates['/Advanced/tourProperties/rounds/' + round + '/unlocked'] = true;
+                updates['/Pro/tourProperties/rounds/' + round + '/unlocked'] = true;                
             }
             else if (round > 4) {
-                updates['/Recreational/closed'] = true;
-                updates['/Advanced/closed'] = true;
-                updates['/Pro/closed'] = true;
-                updates['/Intermediate/closed'] = true;
+                updates['/Recreational/tourProperties/closed'] = true;
+                updates['/Advanced/tourProperties/closed'] = true;
+                updates['/Pro/tourProperties/closed'] = true;
             }
 
             return query.update(updates, function () {
