@@ -124,18 +124,18 @@ function startNewProTour(response: functions.Response) {
                             updates[division + '/division/'] = iter;                            
                             updates[division + '/closed/'] = false;
 
-                            updates[division + 'tourProperties/rounds/0/unlocked'] = true;
-                            updates[division + 'tourProperties/rounds/0/holesID'] = roundHoles[0];
-                            updates[division + 'tourProperties/rounds/1/unlocked'] = false;
-                            updates[division + 'tourProperties/rounds/1/holesID'] = roundHoles[1];
-                            updates[division + 'tourProperties/rounds/2/unlocked'] = false;
-                            updates[division + 'tourProperties/rounds/2/holesID'] = roundHoles[2];
-                            updates[division + 'tourProperties/rounds/3/unlocked'] = false;
-                            updates[division + 'tourProperties/rounds/3/holesID'] = roundHoles[3];
-                            updates[division + 'tourProperties/week/'] = week + 1;
-                            updates[division + 'tourProperties/division/'] = iter;
+                            updates[division + '/tourProperties/rounds/0/unlocked'] = true;
+                            updates[division + '/tourProperties/rounds/0/holesID'] = roundHoles[0];
+                            updates[division + '/tourProperties/rounds/1/unlocked'] = false;
+                            updates[division + '/tourProperties/rounds/1/holesID'] = roundHoles[1];
+                            updates[division + '/tourProperties/rounds/2/unlocked'] = false;
+                            updates[division + '/tourProperties/rounds/2/holesID'] = roundHoles[2];
+                            updates[division + '/tourProperties/rounds/3/unlocked'] = false;
+                            updates[division + '/tourProperties/rounds/3/holesID'] = roundHoles[3];
+                            updates[division + '/tourProperties/week/'] = week + 1;
+                            updates[division + '/tourProperties/division/'] = iter;
                             updates[division + '/scores/'] = null;
-                            updates[division + 'tourProperties/closed/'] = false;
+                            updates[division + '/tourProperties/closed/'] = false;
                             
                         });
 
@@ -207,8 +207,14 @@ function resolveProTour(response: functions.Response, request: functions.Request
     const playerQuery = db.ref().child('playerData/');
     const division = request.query.division;
     const updates = {};
+    const DivisionInts = {
+        'Recreational': 0,
+        'Advanced': 1,
+        'Pro': 2,        
+      };
+    const divisionInt = DivisionInts[division];
 
-    return playerQuery.child('/currentRound/').once("value", function (snap: any) {
+    return query.child('/currentRound/').once("value", function (snap: any) {
         if (snap.val() !== null) {
             const currentRound = snap.val();
             if (currentRound > 4) {
@@ -223,7 +229,7 @@ function resolveProTour(response: functions.Response, request: functions.Request
                             updates[result.playerID + '/proTourResult/completeRound'] = result.completeRound;
                             updates[result.playerID + '/proTourResult/top3'] = result.top3;
                             updates[result.playerID + '/proTourResult/parDiff'] = result.parDiff;
-                            updates[result.playerID + '/proTourResult/division'] = division;
+                            updates[result.playerID + '/proTourResult/division'] = divisionInt;
                         });
                         console.log(updates);
                         return playerQuery.update(updates, function () {

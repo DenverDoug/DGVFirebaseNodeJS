@@ -174,19 +174,19 @@ const closeCompletedGame = function (results: any, gameID: string) {
             return scoreCard;
         });
 
-        const everyoneTimedOut = resetPositions.every(scoreCard => {
-            return scoreCard.score === UncompletedGameScore;
-        });
+        //const everyoneTimedOut = resetPositions.every(scoreCard => {
+        //   return scoreCard.score === UncompletedGameScore;
+        //});
 
-        const ratings = getPlayerRatings(resetPositions, everyoneTimedOut);
+        //const ratings = getPlayerRatings(resetPositions, everyoneTimedOut);
 
-        ratings.forEach(function (scoreCard) {
+        resetPositions.forEach(function (scoreCard) {
             // do not update game stats for players that retired
             if (scoreCard.multiplayerStatus !== MultiplayerStatus[MultiplayerStatus.retired]) {
                 db.ref().child('playerData/' + scoreCard.playerID + '/openGames/' + gameID).update({
                     status: GameStatus[GameStatus.completed],
                     position: scoreCard.position,
-                    ratingChange: scoreCard.ratingChange,
+                    ratingChange: 1,
                     completedGame: scoreCard.score < UncompletedGameScore
                 });
             }

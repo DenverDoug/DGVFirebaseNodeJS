@@ -13,7 +13,7 @@ const getOpenResults = function (scoreCollection) {
     const positions = [];
 
     for (const key of Object.keys(scoreCollection)) {
-        console.log(scoreCollection[key]);
+       // console.log(scoreCollection[key]);
 
         tournamentResults.push({
             playerID: key,
@@ -71,7 +71,7 @@ const getOpenResults = function (scoreCollection) {
         result.top3.push(firstPlace);
         result.top3.push(secondPlace);
         result.top3.push(thirdPlace);
-        console.log(result.top3);
+        //console.log(result.top3);
 
         positions.push(result);
     });
@@ -118,6 +118,13 @@ function resolveOpen(response: functions.Response, request: functions.Request) {
     const playerQuery = db.ref().child('playerData/');
     const division = request.query.division;
     const updates = {};
+    console.log('resolving ' + division);
+    const DivisionInts = {
+        'Recreational': 0,
+        'Advanced': 1,
+        'Pro': 2,        
+      };
+    const divisionInt = DivisionInts[division];
 
     return query.child(division + '/scores/').once("value", function (snapshot: any) {
         if (snapshot.val() !== null) {
@@ -128,9 +135,9 @@ function resolveOpen(response: functions.Response, request: functions.Request) {
                 updates[result.playerID + '/openResult/score'] = result.score;
                 updates[result.playerID + '/openResult/top3'] = result.top3;
                 updates[result.playerID + '/openResult/parDiff'] = result.parDiff;
-                updates[result.playerID + '/openResult/division'] = division;
+                updates[result.playerID + '/openResult/division'] = divisionInt;
             });
-            console.log(updates);
+            //console.log(updates);
             return playerQuery.update(updates, function () {
                 console.log('all done:open resolved');
                 response.send('all done: open resolved');
