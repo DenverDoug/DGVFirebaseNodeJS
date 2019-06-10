@@ -21,6 +21,7 @@ const getOpenResults = function (scoreCollection) {
             score: scoreCollection[key].score,
             parDiff: scoreCollection[key].parDiff,
             position: -1,
+            participants: Object.keys(scoreCollection).length,
             top3: [],
 
         });
@@ -72,7 +73,6 @@ const getOpenResults = function (scoreCollection) {
         result.top3.push(secondPlace);
         result.top3.push(thirdPlace);
         //console.log(result.top3);
-
         positions.push(result);
     });
     return positions;
@@ -136,6 +136,7 @@ function resolveOpen(response: functions.Response, request: functions.Request) {
                 updates[result.playerID + '/openResult/top3'] = result.top3;
                 updates[result.playerID + '/openResult/parDiff'] = result.parDiff;
                 updates[result.playerID + '/openResult/division'] = divisionInt;
+                updates[result.playerID + '/openResult/participants'] = result.participants;
             });
             //console.log(updates);
             return playerQuery.update(updates, function () {

@@ -16,6 +16,7 @@ const getOpenResults = function (scoreCollection) {
             score: scoreCollection[key].score,
             parDiff: scoreCollection[key].parDiff,
             position: -1,
+            participants: Object.keys(scoreCollection).length,
             top3: [],
         });
     }
@@ -123,6 +124,7 @@ function resolveOpen(response, request) {
                 updates[result.playerID + '/openResult/top3'] = result.top3;
                 updates[result.playerID + '/openResult/parDiff'] = result.parDiff;
                 updates[result.playerID + '/openResult/division'] = divisionInt;
+                updates[result.playerID + '/openResult/participants'] = result.participants;
             });
             //console.log(updates);
             return playerQuery.update(updates, function () {

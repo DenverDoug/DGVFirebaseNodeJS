@@ -30,6 +30,7 @@ const getProTourResults = function (scoreCollection) {
             parDiff: par,
             completeRound: valid,
             position: -1,
+            participants: Object.keys(scoreCollection).length,
             top3: [],
         });
     }
@@ -216,6 +217,7 @@ function resolveProTour(response, request) {
                             updates[result.playerID + '/proTourResult/top3'] = result.top3;
                             updates[result.playerID + '/proTourResult/parDiff'] = result.parDiff;
                             updates[result.playerID + '/proTourResult/division'] = divisionInt;
+                            updates[result.playerID + '/proTourResult/participants'] = result.participants;
                         });
                         console.log(updates);
                         return playerQuery.update(updates, function () {
