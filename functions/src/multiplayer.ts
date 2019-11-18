@@ -27,8 +27,7 @@ const closeOldMultiplayerGames = function (response: functions.Response) {
     return query.limitToLast(100).once("value", function (snapshot: any) {
       //return query.orderByKey().startAt(closeGameTime.toString()).endAt(cutOffTime.toString()).once("value", function (snapshot: any) {
         if (snapshot.val() !== null) {
-            console.log('got games');
-            console.log();
+            console.log('got games');            
             const updates = {};
 
             snapshot.forEach(game => {                
@@ -56,21 +55,23 @@ const deleteOldMultiplayerGames = function (response: functions.Response) {
     const fancyTime = new Date();  
     const deleteGameTime = fancyTime.setHours(fancyTime.getHours() - 24);
     const query = db.ref().child('multiplayerOngoing/games/');
+    const testquery = db.ref().child('test/games/');
 
-    console.log('fetching old games to remove');
+    console.log('fetching old games to remove' + deleteGameTime);
 
-    return query.once("value", function (snapshot: any) {
+    //return query.orderByKey().limitToFirst(10000).once("value", function (snapshot: any) {
+    return query.orderByKey().endAt(deleteGameTime.toString()).once("value", function (snapshot: any) {
+        
         if (snapshot.val() !== null) {
             console.log('got games');
             const updates = {};
-
             snapshot.forEach(game => {
-                if (game.val().startTime < deleteGameTime) {
-                    updates[game.val().startTime] = null;                
-                }
-            });
-            // console.log(updates);
-            return query.update(updates)
+                 if (game.val().startTime == null || game.val().startTime < deleteGameTime) {
+                     updates[game.val().startTime] = null;
+                 }
+             });
+             console.log(updates);
+           return query.update(updates);     
         }
         return 0;
     }).then(() => {
@@ -220,9 +221,7 @@ const onMultiPlayerGameStatusUpdated = function (change, context) {
         else {
             resolve();
         }
-
     });
-
 };
 
 const onMultiPlayerStatusUpdated = function (change, context) {

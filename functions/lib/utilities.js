@@ -46,6 +46,30 @@ function getPlayerPositions(playerResults) {
     return positions;
 }
 exports.getPlayerPositions = getPlayerPositions;
+function MPgetPlayerPositions(playerResults) {
+    const positions = [];
+    const sortedResults = playerResults.sort(function (a, b) {
+        a.t = a.t ? a.t : constants_1.UncompletedGameScore;
+        b.t = b.t ? b.t : constants_1.UncompletedGameScore;
+        return a.t - b.t;
+    });
+    sortedResults.forEach(function (result, index) {
+        if (index === 0) {
+            result.position = index + 1;
+        }
+        else {
+            if (positions[index - 1].t === result.t) {
+                result.position = positions[index - 1].position;
+            }
+            else {
+                result.position = index + 1;
+            }
+        }
+        positions.push(result);
+    });
+    return positions;
+}
+exports.MPgetPlayerPositions = MPgetPlayerPositions;
 function getRandomKey(keys) {
     const random = getRandomInt(0, keys.length - 1);
     return keys[random];

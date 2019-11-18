@@ -13,7 +13,7 @@ const getProTourResults = function (scoreCollection) {
     const positions = [];
 
     for (const key of Object.keys(scoreCollection)) {
-        console.log(scoreCollection[key]);
+        //console.log(scoreCollection[key]);
         var total = 0;
         var par = 0;
         var valid = true;
@@ -21,7 +21,7 @@ const getProTourResults = function (scoreCollection) {
         for (var it = 0; it < 4; it++) {
             if (scoreCollection[key].scores[it] !== 0 && scoreCollection[key].scores[it] !== 999) {
                 total += scoreCollection[key].scores[it];
-                par += scoreCollection[key].pars[it];
+                par += scoreCollection[key].pars ? scoreCollection[key].pars[it] : 0;
             }
             else {
                 valid = false;
@@ -86,7 +86,11 @@ const getProTourResults = function (scoreCollection) {
         result.top3.push(firstPlace);
         result.top3.push(secondPlace);
         result.top3.push(thirdPlace);
-        console.log(result.top3);
+        //console.log(result.top3);
+        if(result.position < 11){
+            console.log("position " + result.position);
+            console.log(result.playerID + " " + result.playerName);
+        }
 
         positions.push(result);
     });
@@ -233,7 +237,7 @@ function resolveProTour(response: functions.Response, request: functions.Request
                             updates[result.playerID + '/proTourResult/division'] = divisionInt;
                             updates[result.playerID + '/proTourResult/participants'] = result.participants;
                         });
-                        console.log(updates);
+                        //console.log(updates);
                         return playerQuery.update(updates, function () {
                             console.log('all done: pro tour resolved');
                             response.send('all done: pro tour resolved');
